@@ -14,12 +14,14 @@ class Button:
         self.pos1 = pos1
         self.pos2 = pos2
 
-    def draw_rectangle(self,image):
-        cv2.rectangle(image, self.pos1,self.pos2, (255, 0, 0), 5)
+    def draw_rectangle(self,image,color):
+        cv2.rectangle(image, self.pos1,self.pos2, color, 5)
     def puttext(self,image,x,y):
          cv2.putText(image,self.label,(x+5,y+40),cv2.FONT_HERSHEY_PLAIN,3,(0,0,0),3)
 
 def hand_detection(image,Draw,mphands,hands,draw):
+    positionx = 0
+    positiony = 0
 
     rgbimage = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     result = hands.process(rgbimage)
@@ -29,15 +31,19 @@ def hand_detection(image,Draw,mphands,hands,draw):
             for hand in result.multi_hand_landmarks:
                 for index, landmark in enumerate(hand.landmark):
                     h, w, no_of_colors = frame_shape
-                    positionx, positiony = int(landmark.x * w), int(landmark.y * h)
-                    print("index:", index, "\t", positionx, positiony)
+                    if index == 8:
+                        positionx, positiony = int(landmark.x * w), int(landmark.y * h)
+
+
             draw.draw_landmarks(image, hand, mphands.HAND_CONNECTIONS)
+    create_buttons(image,positionx,positiony)
 
 
 
 
 # Creating the button
-def create_buttons(image):
+def create_buttons(image,px,py):
+    color = (255, 0, 0)
     keys = [
         ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
         ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
@@ -54,7 +60,10 @@ def create_buttons(image):
             button[count] = Button(j, (x, y), (x + 50, y + 50))
             button[count].puttext(image, x, y)
             x += 50 + 5
-            button[count].draw_rectangle(image)
+            if x<=px<=x+50 and y<=py<=y+50:
+                button[count].draw_rectangle(image, (255,255,0))
+            else:
+                button[count].draw_rectangle(image, color)
 
             count += 1
 
@@ -74,6 +83,5 @@ while ret == True:
     image = cv2.resize(image, (1000, 700))
     image = cv2.flip(image, 1)
     hand_detection(image,True,mphands,hands,draw)
-    create_buttons(image)
     cv2.imshow('Frame', image)
     cv2.waitKey(1)
