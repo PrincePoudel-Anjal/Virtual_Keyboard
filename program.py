@@ -3,8 +3,6 @@ import numpy as np
 import mediapipe as mp
 import math
 
-
-
 text = ""
 
 def find_distance(image,p1,p2):
@@ -13,19 +11,8 @@ def find_distance(image,p1,p2):
     length = math.hypot(x2-x1,y2-y1)
     if image is not None:
         cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-        cv2.circle(image, (x1, y1), 5, (0, 255, 0), cv2.FILLED)
-        cv2.circle(image, (x2, y2), 5, (0, 255, 0), cv2.FILLED)
-
+        
     return length, image
-
-def box_around_hands(image):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2)
-    hsvcimage = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    lowerlimit = np.array([22, 100, 100])
-    upperlimit = np.array([30, 255, 255])
-    mask = cv2.inRange(hsvcimage, lowerlimit, upperlimit)
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
 
 # Class of Buttons
 class Button:
@@ -37,7 +24,7 @@ class Button:
     def draw_rectangle(self,image,color):
         cv2.rectangle(image, self.pos1,self.pos2, color, 10)
     def puttext(self,image,x,y):
-         cv2.putText(image,self.label,(x+5,y+40),cv2.FONT_HERSHEY_PLAIN,3,(0,0,0),3)
+         cv2.putText(image,self.label,(x+5,y+40),cv2.FONT_HERSHEY_PLAIN,3,(47,255,173),3)
 
 def hand_detection(image,Draw,mphands,hands,draw):
     positionx = [0] * 20
@@ -55,22 +42,22 @@ def hand_detection(image,Draw,mphands,hands,draw):
                     h, w, no_of_colors = frame_shape
                     if index == 8:
                         positionx[index], positiony[index] = int(landmark.x * w), int(landmark.y * h)
+                    if index == 12:
+                        positionx[12], positiony[12] = int(landmark.x * w), int(landmark.y * h)
                     if index == 4:
                         positionx[4], positiony[4] = int(landmark.x * w), int(landmark.y * h)
-                    if index == 0:
-                        positionx[0], positiony[0] = int(landmark.x * w), int(landmark.y * h)
-                    if index == 17:
-                        positionx17, positiony[17] = int(landmark.x * w), int(landmark.y * h)
+                    if index == 9:
+                        positionx[9], positiony[9] = int(landmark.x * w), int(landmark.y * h)
 
                     draw.draw_landmarks(image, hand, mphands.HAND_CONNECTIONS)
-    area = (positionx[0] - positionx[4]) * (positiony[0] - positiony[8])
-    # print(area)
+    area = 3.14 * (positionx[9]-positionx[4]) * (positionx[9]-positionx[4])
+
     create_buttons(image,positionx,positiony,area)
 
 # Creating the button
 def create_buttons(image,px,py,area):
     global text
-    color = (255, 255,255)
+    color = (255,0,0)
     keys = [
         ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
         ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
@@ -91,30 +78,32 @@ def create_buttons(image,px,py,area):
             button[count].puttext(image, x, y)
 
             if x<=px[8]<=x+50 and y<=py[8]<=y+50:
-                button[count].draw_rectangle(image, (255,255,0))
-                length,image = find_distance(image,(px[8],py[8]),(px[4],py[4]))
+                button[count].draw_rectangle(image, (255,255,10))
+                length,image = find_distance(image,(px[8],py[8]),(px[12],py[12]))
 
-                print(length)
+                print(area," ",length)
 
-                if 40000 <area <60000:
-                    cv2.rectangle(image, (px[4], py[8]), (px[0], py[0]), (0, 255, 0), 2)
-                    if 50<length<53:
+                if  area <10000:
+                    cv2.circle(image, (px[9], py[9]), py[9]-py[12], (0, 255, 0), 2)  #BBox Object detection
+                    if 18<length<21:
+                        cv2.waitKey(150)
                         text = text + j
+
 
 
             else:
                 button[count].draw_rectangle(image, color)
             x += 50 + 5
             cv2.putText(image, text, (150, 570), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), thickness=7)
+
             count += 1
 
 # main
-
 ret = True
 video = cv2.VideoCapture(0)
 
 mphands = mp.solutions.hands
-hands = mphands.Hands(static_image_mode = False,min_detection_confidence= 0.7,min_tracking_confidence=0.7)
+hands = mphands.Hands(static_image_mode = False,min_detection_confidence= 0.8,min_tracking_confidence=0.8)
 draw = mp.solutions.drawing_utils
 
 
@@ -124,5 +113,5 @@ while ret == True:
     image = cv2.flip(image, 1)
     hand_detection(image,True,mphands,hands,draw)
     cv2.imshow('Frame', image)
-    cv2.waitKey(20)
+    cv2.waitKey(1)
 #Conclusion: Main->hand_detection->CreateButtons
