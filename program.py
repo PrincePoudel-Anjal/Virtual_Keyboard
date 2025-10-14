@@ -11,7 +11,7 @@ def find_distance(image,p1,p2):
     length = math.hypot(x2-x1,y2-y1)
     if image is not None:
         cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-        
+
     return length, image
 
 # Class of Buttons
