@@ -83,7 +83,7 @@ def create_buttons(image,px,py,area):
 
                 print(area," ",length)
 
-                if  area <10000:
+                if  area <4000:
                     cv2.circle(image, (px[9], py[9]), py[9]-py[12], (0, 255, 0), 2)  #BBox Object detection
                     if 18<length<21:
                         cv2.waitKey(150)
